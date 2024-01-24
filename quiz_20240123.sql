@@ -58,10 +58,67 @@ select t1.ename, t2.grade
      from emp t1 left join dept t2 on t1.deptno = t2.deptno
  group by t2.dname;
 --7. emp 테이블과 dept 테이블을 등가조인해서 사원 수가 5명 이상인 부서의 부서 이름과 사원 수를 출력하시오.
+  select t2.dname "부서명", count(*) "사원수"
+    from emp t1, dept t2
+   where t1.deptno = t2.deptno 
+group by t2.dname
+  having  count(*) >= 5;
+  
+  select t2.dname "부서명", count(*) "사원수"
+    from emp t1 join dept t2 on t1.deptno = t2.deptno 
+group by t2.dname
+  having count(*) >= 5;  
+
 --8. emp 테이블과 dept 테이블을 외부조인해서 사원 수가 5명 이상인 부서의 부서 이름과 사원 수를 출력하시오. 
 --부서가 없는 사원도 포함하시오.
+  select t2.dname "부서명", count(*) "사원수"
+    from emp t1, dept t2
+   where t1.deptno = t2.deptno(+) 
+group by t2.dname
+  having  count(*) >= 5;
+  
+  select t2.dname "부서명", count(*) "사원수"
+    from emp t1 left outer join dept t2 on t1.deptno = t2.deptno 
+group by t2.dname
+  having count(*) >= 5;  
 --9. emp 테이블과 bonus 테이블을 등가조인해서 사원 이름과 보너스를 출력하시오.
+    select t2.ename, t2.comm
+      from emp t1, bonus t2
+     where t1.ename = t2.ename; 
+
+    select t2.ename, t2.comm
+      from emp t1 join bonus t2 on t1.ename = t2.ename; 
 --10. emp 테이블과 bonus 테이블을 외부조인해서 사원 이름과 보너스를 출력하시오. 
 --보너스를 받지 못한 사원도 포함하시오.
+    select t1.ename, nvl(t2.comm,0)
+      from emp t1, bonus t2
+     where t1.ename = t2.ename(+);
+     
+    select t1.ename, nvl(t2.comm,0)
+      from emp t1 left outer join bonus t2 on t1.ename = t2.ename;
 --11. EMP 테이블을 셀프 조인해서 같은 부서에서 일하는 사원들의 이름을 출력하시오.
+  select distinct t3.dname, t2.ename
+    from emp t1, emp t2, dept t3
+   where t1.deptno = t2.deptno
+     and t2.deptno = t3.deptno
+order by t3.dname;
+
+  select distinct t3.dname, t2.ename
+    from emp t1 join emp t2   on t1.deptno = t2.deptno
+                join dept t3  on t2.deptno = t3.deptno
+order by t3.dname;    
+
 --12. EMP 테이블을 셀프 조인해서 자신보다 더 많은 급여를 받는 사원들의 이름을 출력하시오.
+  select t1.ename,t1.sal , t2.ename, t2.sal
+    from emp t1, emp t2
+   where t1.sal < t2.sal;
+   
+  select t1.ename,t1.sal,
+         listagg(t2.ename,',') within group(order by t2.sal)
+    from emp t1, emp t2
+   where t1.sal < t2.sal
+group by t1.ename,t1.sal
+order by t1.sal;   
+   
+   
+   

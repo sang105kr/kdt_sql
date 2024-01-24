@@ -35,3 +35,10 @@ insert into dept_tmp
 commit;  --이전 commit이후의 작업을 db에 반영                  
 rollback; --최근 commit이후의 작업을 취소                 
 */
+
+insert into dept_tmp (deptno,dname,loc)
+     values (80,'NETWORk3','');  
+insert into dept_tmp (deptno,dname,loc)
+     values (90,'NETWORk4',' ');       
+select * from dept_tmp;    
+rollback;

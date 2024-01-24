@@ -104,10 +104,15 @@ INSERT INTO CHAP10HW_EMP
 VALUES(7208, 'TEST_USER8', 'STUDENT', 7201, TO_DATE('2018-03-09', 'YYYY-MM-DD'), 1200, NULL, 80);
 
 --10Àå3¹®Á¦
+--update chap10hw_emp
+--   set deptno = 70
+-- where empno in ( select empno
+--                    from chap10hw_emp
+--                   where sal > ( select avg(sal)
+--                                   from chap10hw_emp
+--                                  where deptno = 50 ) ); 
 update chap10hw_emp
    set deptno = 70
- where empno in ( select empno
-                    from chap10hw_emp
-                   where sal > ( select avg(sal)
-                                   from chap10hw_emp
-                                  where deptno = 50 ) ); 
+ where sal > ( select avg(sal)
+                 from chap10hw_emp
+                where deptno = 50 ); 

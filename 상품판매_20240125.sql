@@ -103,21 +103,24 @@ select * from customers;
 insert into orders (order_id,customer_id,orderdate,status) values (1,1,to_date('2024/1/1','YYYY/MM/DD'),'pending');
 insert into orders (order_id,customer_id,orderdate,status) values (2,1,to_date('2024/1/2','YYYY/MM/DD'),'pending');
 insert into orders (order_id,customer_id,orderdate,status) values (3,2,to_date('2024/1/1','YYYY/MM/DD'),'completed');
-insert into orders (order_id,customer_id,orderdate,status) values (4,2,to_date('2024/1/2','YYYY/MM/DD'),'canceled');
+insert into orders (order_id,customer_id,orderdate,status) values (4,2,to_date('2024/1/2','YYYY/MM/DD'),'cancelled');
 insert into orders (order_id,customer_id,orderdate,status) values (5,2,to_date('2024/1/3','YYYY/MM/DD'),'pending');
 select * from orders;
-
-insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (1,1,1,1,1000000);
-insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (2,2,1,1,1000000);
-insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (3,2,2,1,500000);
-insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (4,3,3,1,50000);
-insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (5,4,4,1,100000);
-insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (5,5,5,1,400000);
 
 insert into product (product_id,productname,price) values (1,'컴퓨터',1000000);
 insert into product (product_id,productname,price) values (2,'프린트',500000);
 insert into product (product_id,productname,price) values (3,'마우스',50000);
 insert into product (product_id,productname,price) values (4,'키보드',100000);
 insert into product (product_id,productname,price) values (5,'모니터',400000);
+select * from product;
+
+insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (1,1,1,1,1000000);
+insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (2,2,1,1,1000000);
+insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (3,2,2,1,500000);
+insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (4,3,3,1,50000);
+insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (5,4,4,1,100000);
+insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (6,5,5,1,400000);
+select * from orderdetails;
+
 
 

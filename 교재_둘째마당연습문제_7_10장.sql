@@ -116,3 +116,39 @@ update chap10hw_emp
  where sal > ( select avg(sal)
                  from chap10hw_emp
                 where deptno = 50 ); 
+                
+--10장4문제   
+--변경전
+select *
+  from chap10hw_emp
+ where hiredate > ( select min(hiredate)
+                      from chap10hw_emp
+                     where deptno = 60); 
+--변경                     
+update chap10hw_emp
+   set sal = sal * 1.1,
+       deptno = 80
+ where hiredate > ( select min(hiredate)
+                      from chap10hw_emp
+                     where deptno = 60); 
+--변경후                     
+select *
+  from chap10hw_emp
+ where empno in( 8000,7205,7206,7207,7208);
+                 
+--10장5문제  
+--삭제전
+select count(*)
+  from chap10hw_emp
+ where empno in (7839,8000,7201,7203);  --4명
+--삭제 
+delete from chap10hw_emp
+ where empno in ( select t1.empno
+                   from chap10hw_emp t1, chap10hw_salgrade t2
+                  where t1.sal between t2.losal and t2.hisal
+                    and t2.grade = 5 );
+--삭제후
+select count(*)
+  from chap10hw_emp
+ where empno in (7839,8000,7201,7203);  --0명
+

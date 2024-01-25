@@ -94,10 +94,10 @@ alter table customers modify udate default sysdate;
 
 --샘플데이터
 insert into customers (customer_id,customername,loc ) values (1,'홍길동1','울산1');
-insert into customers (customer_id,customername,loc ) values (2,'홍길동2','울산2');
-insert into customers (customer_id,customername,loc ) values (3,'홍길동3','울산3');
-insert into customers (customer_id,customername,loc ) values (4,'홍길동4','울산4');
-insert into customers (customer_id,customername,loc ) values (5,'홍길동5','울산5');
+insert into customers (customer_id,customername,loc ) values (2,'홍길동2','울산1');
+insert into customers (customer_id,customername,loc ) values (3,'홍길동3','울산2');
+insert into customers (customer_id,customername,loc ) values (4,'홍길동4','울산2');
+insert into customers (customer_id,customername,loc ) values (5,'홍길동5','울산2');
 select * from customers;
 
 insert into orders (order_id,customer_id,orderdate,status) values (1,1,to_date('2024/1/1','YYYY/MM/DD'),'pending');
@@ -121,6 +121,55 @@ insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) val
 insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (5,4,4,1,100000);
 insert into orderdetails (orderdetail_id,order_id,product_id,quantity,price) values (6,5,5,1,400000);
 select * from orderdetails;
+
+--2. Customers 테이블에서 특정 지역에 거주하는 고객의 수를 찾는 쿼리를 작성합니다.
+  select loc "지역명", count(*) "고객수"
+    from customers
+group by loc; 
+--3. Orders 테이블에서 최근 30일 이내에 생성된 주문을 찾는 쿼리를 작성합니다.
+select *
+  from orders
+ where orderdate >= ( select sysdate - interval '30' day  
+                        from dual);
+select sysdate - interval '30' day  
+  from dual;
+select sysdate - 30 from dual;    
+select to_date(sysdate) - 30 from dual;                        
+--4. OrderDetails 테이블을 사용하여 특정 주문의 총 금액을 계산하는 쿼리를 작성합니다.
+  select order_id, sum( quantity * price )
+    from orderdetails
+group by order_id;
+
+--5. Customers와 Orders를 조인하여, 각 고객별로 주문 횟수를 계산하는 쿼리를 작성합니다.
+    select t1.customername, count(*)
+      from customers t1, orders t2
+     where t1.customer_id = t2.customer_id
+  group by t1.customername;   
+--6. 주문이력이 없는 고객의 이름을 보이시오
+select t1.customername
+  from customers t1
+ where not exists ( select *
+                      from orders t2
+                     where t2.customer_id = t1.customer_id);
+
+select t1.customername
+  from customers t1 left outer join orders t2 on t1.customer_id = t2.customer_id
+ where t2.order_id is null;
+
+--7. 일일 판매총액 내림차순으로 주문 정보를 보이시오.(주문번호,고객명,주문액,주문일)
+    select t1.orderdate,t3.customername, sum(t2.quantity * t2.price)
+      from orders t1, orderdetails t2, customers t3
+     where t1.order_id = t2.order_id
+       and t1.customer_id = t3.customer_id
+  group by t1.orderdate, t3.customername
+  order by t1.orderdate, sum(t2.quantity * t2.price) desc; 
+       
+--8. 3번이상 주문한 고객의 이름을 보이시오.
+    select t2.customername, count(*)
+      from orders t1, customers t2
+     where t1.customer_id = t2.customer_id 
+  group by t2.customername
+    having count(*) >= 3 ;      
 
 
 

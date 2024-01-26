@@ -1,5 +1,7 @@
+--계정삭제
 DROP USER c##scott CASCADE;
 
+--계정생성
 create user c##scott identified by tiger default tablespace users temporary tablespace temp profile default;
 grant connect, resource, create view to c##scott;
 GRANT UNLIMITED TABLESPACE TO c##scott;

@@ -1,0 +1,6 @@
+DROP USER c##scott CASCADE;
+
+create user c##scott identified by tiger default tablespace users temporary tablespace temp profile default;
+grant connect, resource, create view to c##scott;
+GRANT UNLIMITED TABLESPACE TO c##scott;
+alter user c##scott account unlock;

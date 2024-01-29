@@ -138,7 +138,8 @@ insert into reservation
     values(reservation_reservation_id_seq.nextval,2,4,2,to_date('2024-06-01','YYYY-MM-DD'),2000,'D1');
 insert into reservation 
     values(reservation_reservation_id_seq.nextval,2,5,3,to_date('2024-06-01','YYYY-MM-DD'),2200,'E1');
-    
+insert into reservation 
+    values(reservation_reservation_id_seq.nextval,3,5,3,to_date('2024-06-01','YYYY-MM-DD'),2200,'F1');    
 commit;
 --샘플데이터 확인
 select * from customer;
@@ -230,30 +231,195 @@ group by director
   order by t1.reservation_date
   fetch first 1 rows only;                           
       
---영화표가 12,000원일 때 영화별 수익
+--영화표가 12,000원일 때 영화별 매출총액
+    select t2.title "영화제목", count(*) * 12000 "매출액"
+      from reservation t1 join movie t2 on t1.movie_id = t2.movie_id
+  group by t2.title
+  order by count(*) * 12000 desc;
+
 --고객이 극장별 영화를 보는데 보낸 총 시간
+  select (select customer_name
+            from customer
+           where customer_id = t2.customer_id ) "고객명", 
+         (select theater_name
+            from theater
+           where theater_id = t3.theater_id ) "극장명", 
+         sum(t4.running_time)   "총 관람시간"
+    from reservation t1 join customer t2 on t1.customer_id = t2.customer_id
+                        join theater t3  on t1.theater_id  = t3.theater_id
+                        join movie t4 on t1.movie_id = t4.movie_id
+group by t2.customer_id, t3.theater_id                        
+having (select customer_name
+            from customer
+           where customer_id = t2.customer_id ) = '고객2';    
+  
+    
 --10년동안 개봉한 영화 중 가장 인기있는 영화감독
---위치별 영화관 갯수"
---영화 중 20000원 이상인 영화의 영화와 영화 감독 조회
+      select ( select title
+                 from movie
+               where movie_id = t2.movie_id ) "영화명",
+               count(*) "예약건수"
+        from reservation t1 join movie t2 on t1.movie_id = t2.movie_id
+        where t2.release_date between add_months(sysdate,-1*12*10) and sysdate 
+     group by t2.movie_id
+     order by count(*) desc
+     fetch first 1 rows only;
+
+--위치별 영화관 갯수
+    select location, count(*)
+      from theater
+  group by location;
+
 --상영시간이 가장 긴 영화의 영화감독
+  select title, director, running_time
+    from movie
+   where running_time = ( select max(running_time)
+                            from movie );
+
 --장르별 평균 상영시간
+    select genre, round(avg(running_time),2)
+      from movie
+  group by genre ;
 --가장 최근에 개봉한 영화"
---가장 최근에 개봉한 영화 조회
+    select title
+      from movie
+     where release_date <= sysdate
+  order by release_date desc
+  fetch first 1 rows only; 
 --예약 건수가 가장 많은 영화 조회
+   select t2.movie_id, t2.title, count(*)
+     from reservation t1 join movie t2 on t1.movie_id = t2.movie_id
+ group by t2.movie_id,t2.title
+ order by count(*) desc
+ fetch first 1 rows only;    
 --고객 포인트 적립내역 조회
+    select customer_name, points
+      from customer;
+      
 --감독으로 상영중인 영화 찾기
+    select t2.director, t2.title
+      from reservation t1 join movie t2 on t1.movie_id = t2.movie_id
+     where t2.release_date >= sysdate;
 --장르로 영화 조회
---남은 좌석이 많은 영화관 조회"
+    select *
+      from movie
+     where genre = '장르1' ;
+--남은 좌석이 많은 영화관 조회
+    select count(*)
+      from reservation t1 join theater t2 on t1.theater_id = t2.theater_id
+                          join movie t3  on t1.movie_id = t3.movie_id
+     where t3.release_date >= sysdate
+       and t2.theater_id = '1';
+  
+  select t4.theater_id, 
+         t4.theater_name,  
+         t4.capacity "수용인원",
+         t4.capacity - ( select count(*)
+              from reservation t1 join theater t2 on t1.theater_id = t2.theater_id
+                                  join movie t3  on t1.movie_id = t3.movie_id
+             where t3.release_date >= sysdate
+               and t2.theater_id = t4.theater_id ) "남은자리수"
+    from theater t4;    
 --해당 영화를 상영하는 극장 전부 찾기
---상영 시간이 긴 영화 찾기
---좌석 수가 가장 많은 극장 찾기"
+    select distinct t2.*
+      from reservation t1 join theater t2 on t1.theater_id = t2.theater_id
+                          join movie t3 on t1.movie_id = t3.movie_id
+     where t3.title = '영화5';
+--상영 시간이 긴 영화 찾기 
+  select title
+    from movie
+   where running_time = ( select max(running_time)
+                            from movie );
+--좌석 수가 가장 많은 극장 찾기
+  select theater_name, capacity
+    from theater
+   where capacity = ( select max(capacity)
+                        from theater );
 --최근 5년동안 개봉된 영화와 관객의 총합
---상영시간이 가장 짧은 영화와 그 영화를 본 관객의 이름과 이메일
---가장 관객수가 많은 영화를 본 고객별 포인트와 10000점을 채우기 위해 남은 포인트"
+  create view reservation_vw as
+    select t1.reservation_id, t1.reservation_date, t1.show_time, t1.seat,
+           t2.customer_id, t2.customer_name, t2.contact, t2.email, t2.points,
+           t3.theater_id, t3.theater_name, t3.location, t3.capacity,
+           t4.movie_id, t4.title, t4.director, t4.genre, t4.running_time, t4.release_date
+      from reservation t1 join customer t2 on t1.customer_id = t2.customer_id
+                          join theater t3  on t1.theater_id = t3.theater_id
+                          join movie t4    on t1.movie_id = t4.movie_id;
+
+  select title
+    from movie
+   where release_date between add_months(sysdate,-1*12*5) and sysdate;
+   
+  select count(*) 
+    from reservation_vw
+   where release_date between add_months(sysdate,-1*12*5) and sysdate;   
+--상영시간이 가장 짧은 영화와 그 영화를 본 관객의 이름과 이메일    
+    select movie_id,title,customer_name,email
+      from reservation_vw
+     where running_time = (select min(running_time)
+                             from movie);
+--가장 관객수가 많은 영화를 본 고객별 포인트와 10000점을 채우기 위해 남은 포인트
+select customer_id, customer_name, points, 10000-points
+  from customer
+ where customer_id in ( select customer_id
+                          from reservation
+                         where movie_id in (   select movie_id
+                                                 from reservation
+                                             group by movie_id 
+                                               having count(*) =  ( select max(cnt)
+                                                                          from ( select movie_id, count(*) cnt
+                                                                                   from reservation
+                                                                               group by movie_id )) ));
+ select t2.customer_id,t2.customer_name, t2.points, 10000-points
+   from reservation t1 join customer t2 on t1.customer_id = t2.customer_id
+  where t1.movie_id in ( select movie_id
+                           from reservation
+                       group by movie_id 
+                         having count(*) =  ( select max(cnt)
+                                                from ( select movie_id, count(*) cnt
+                                                         from reservation
+                                                     group by movie_id )) );
+
 --한곳의 극장에서만 방영한 영화
+select title
+  from movie
+ where movie_id in ( select movie_id
+                       from (  select movie_id, theater_id,count(*)
+                                 from reservation_vw
+                             group by movie_id, theater_id
+                               having count(*) = 1 ) );  
+                               
+select (select title
+          from movie
+         where movie_id =  t1.movie_id )
+  from (  select movie_id, theater_id, count(*)
+            from reservation_vw
+        group by movie_id, theater_id
+          having count(*) = 1 ) t1;                                 
 --영화 방영 시간이 가장 많은 극장
+  select ( select theater_name
+             from theater
+            where theater_id = t1.theater_id ) "극장명", 
+          sum(running_time) "방영시간"
+    from reservation_vw t1
+group by theater_id 
+  having sum(running_time) = (  select max(tot_time)
+                                  from ( select theater_id, sum(running_time) tot_time
+                                           from reservation_vw
+                                       group by theater_id ));
 --고객 포인트가 가장 많은 사람이 보지 않은 영화
+select t2.title
+  from reservation t1 join movie t2 on t1.movie_id = t2.movie_id
+ where t1.customer_id not in ( select customer_id
+                                 from customer 
+                                where points =  ( select max(points)
+                                                    from customer ) );
 --좌석이 가득찬 영화를 방영한 극장
+select distinct t1.theater_name, t1.title
+  from reservation_vw t1 
+ where t1.capacity = ( select count(*)
+                         from reservation_vw
+                        where theater_id = t1.theater_id
+                          and movie_id = t1.movie_id) ;
 --가장 많이 예약된 영화를 방영하지 않은 극장에서 방영한 영화중 가장 많이 예약된 영화"
 --최근 한달간 영화를 가장 많이 본 고객  
 --가장 최근에 개봉한 영화 

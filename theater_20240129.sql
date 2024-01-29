@@ -420,8 +420,53 @@ select distinct t1.theater_name, t1.title
                          from reservation_vw
                         where theater_id = t1.theater_id
                           and movie_id = t1.movie_id) ;
---가장 많이 예약된 영화를 방영하지 않은 극장에서 방영한 영화중 가장 많이 예약된 영화"
+--가장 많이 예약된 영화를 방영하지 않은 극장에서 방영한 영화중 가장 많이 예약된 영화
+--1)가장 많이 예약된 영화
+  select movie_id
+    from reservation_vw
+group by movie_id 
+  having count(*) = (   select max(cnt)
+                          from ( select movie_id, count(*) cnt
+                                   from reservation_vw
+                               group by movie_id ) );   
+
+--2)영화를 방영하지 않은 극장 에서 방영된 영화
+  select distinct theater_id, movie_id
+    from reservation_vw
+   where movie_id not in (   select movie_id
+                                from reservation_vw
+                            group by movie_id 
+                              having count(*) = (   select max(cnt)
+                                                      from ( select movie_id, count(*) cnt
+                                                               from reservation_vw
+                                                           group by movie_id ) ) );    
+ --3) 가장 많이 예약된 영화   
+ select ( select theater_name
+            from theater
+           where theater_id = t1.theater_id ) "극장명",
+         ( select title
+             from movie
+            where movie_id = t1.movie_id ) "영화명", 
+          max(t1.cnt) "상영횟수"
+   from ( select theater_id,movie_id, count(*) cnt
+            from reservation_vw
+           where (theater_id, movie_id) in (  select distinct theater_id, movie_id
+                                                from reservation_vw
+                                               where movie_id not in (   select movie_id
+                                                                            from reservation_vw
+                                                                        group by movie_id 
+                                                                          having count(*) = (   select max(cnt)
+                                                                                                  from ( select movie_id, count(*) cnt
+                                                                                                           from reservation_vw
+                                                                                                       group by movie_id ) ) ) )    
+        group by theater_id,movie_id) t1
+group by t1.theater_id,t1.movie_id                                                                                                    
+order by "극장명", "영화명";
 --최근 한달간 영화를 가장 많이 본 고객  
+    select customer_id,count(*)
+      from reservation_vw
+     where reservation_date between add_months(sysdate,-1) and sysdate
+  group by customer_id;
 --가장 최근에 개봉한 영화 
 --한달간 가장 인기있었던 극장
 --고객이 예약한 영화, 상영시간, 극장명, 위치를 보이시오

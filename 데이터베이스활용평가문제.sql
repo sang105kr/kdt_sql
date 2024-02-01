@@ -173,7 +173,7 @@ select t1.name
 
 --11. 급여 상위 TOP 3를 순위와 함께 보이시오.
 --case1)
-select t1.*,
+select t1.empno "사번", t1.name "이름", t1.salary "급여", 
        rank() over(order by salary desc) as "순위" 
   from employee t1
 fetch first 3 rows only;
@@ -213,6 +213,55 @@ select t3.name, t3.salary
 group by  t3.projno, t3.projname;
   
 --15. 프로젝트에 참여시간이 가장 많은 사원과 적은 사원의 이름을 보이시오.
+--case1) 합집합
+select (select name from employee where empno = t1.empno),
+       sum(hoursworked)
+  from works t1
+group by empno
+having sum(hoursworked) = ( select max(sum(hoursworked))
+                              from works
+                          group by empno)   
+union
+select (select name from employee where empno = t1.empno),
+        sum(hoursworked)
+  from works t1
+group by empno
+having sum(hoursworked) = ( select min(sum(hoursworked))
+                              from works
+                          group by empno); 
+
+--case2) 집합연산자 
+  select (select name from employee where empno = t1.empno) "이름",
+          sum(hoursworked) "프로젝트참여시간"
+    from works t1
+group by empno
+  having sum(hoursworked) in (( select min(sum(hoursworked))
+                                  from works
+                              group by empno),
+                             (select max(sum(hoursworked))
+                                from works
+                            group by empno));                          
+                          
 --16. 팀장의 급여를 10%인상하고 인상된 결과를 보이시오. (단, department테이블을 활용할 것)
+update employee
+   set salary = salary * 1.1
+ where empno in ( select manager
+                    from department );
+select name,position,salary from employee  
+ where empno in ( select manager
+                    from department );
+                    
 --17. 사원이 참여한 프로젝트에 대해 사원명, 프로젝트명, 참여시간을 보이는 뷰를 작성하시오.
+create view project_vw as
+    select t1.name, t3.projname, t2.hoursworked
+      from employee t1 join works t2 on t1.empno = t2.empno
+                       join project t3 on t2.projno = t3.projno;
+select * from project_vw;
 --18. employee 테이블의 name 열을 대상으로 인덱스를 생성하시오. 
+create index ix_employee_name on employee(name);
+select *
+  from user_indexes
+ where table_name = 'EMPLOYEE'
+   and index_name = 'IX_EMPLOYEE_NAME';  
+
+

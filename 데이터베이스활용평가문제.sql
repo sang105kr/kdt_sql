@@ -119,6 +119,100 @@ insert into works values (103, 1007, 500);
 insert into works values (103, 1008, 400);
 insert into works values (103, 1009, 300);
 insert into works values (103, 1010, 200);
+
+--부서 데이터 insert-> 사원 데이터 insert-> update 부서 테이블
+update department set manager = 1001 where deptno = 10;
+update department set manager = 1004 where deptno = 20;
+update department set manager = 1007 where deptno = 30;
+update department set manager = 1011 where deptno = 40;
+update department set manager = 1013 where deptno = 50;
 commit;
 
-select * from employee;
+--7. 사원 중 같은 성(姓)을 가진 사람이 몇 명이나 되는지 성별 인원수를 구하시오.
+    select substr(name,1,1) "성", count(*) "인원수"
+      from employee
+  group by substr(name,1,1);  
+  
+--8. ‘영업팀’ 부서에서 일하는 사원의 이름, 연락처, 주소를 보이시오. (단 연락처 없으면 ‘연락처 없음’ , 연락처 끝4자리 중 앞2자리는 별표 * 로 표시하시오. 예) 010-111-**78 )
+    select t1.name, nvl2(t1.phoneno,substr(t1.phoneno,1,8) || '**' || substr(t1.phoneno,11,2),'연락처없음')   , t1.address
+      from employee t1 join department t2 on t1.deptno = t2.deptno
+     where t2.deptname = '영업팀' ;
+
+--9. ‘홍길동7’ 팀장(manager) 부서에서 일하는 팀원의 수를 보이시오. 
+select count(*) "팀원수"
+  from employee
+ where deptno = ( select t1.deptno
+                    from employee t1 join department t2 on t1.empno = t2.manager
+                   where t1.name = '홍길동7' )
+  and name != '홍길동7';                   
+
+--10. 프로젝트에 참여하지 않은 사원의 이름을 보이시오.
+--case1) 외부조인
+select t1.name
+  from employee t1 left outer join works t2 on t1.empno = t2.empno
+ where t2.projno is null;
+--case2) 집합연산자
+ select name
+   from employee 
+  where empno not in ( select distinct empno
+                         from works );
+ --case3) 차집합
+ select name
+   from employee
+  where empno in ( select empno
+                     from employee 
+                    minus
+                    select distinct empno
+                      from works);
+ --case4) 상관쿼리이용                     
+ select t1.name
+   from employee t1
+  where not exists ( select t1.empno
+                       from works
+                      where empno = t1.empno );
+
+--11. 급여 상위 TOP 3를 순위와 함께 보이시오.
+--case1)
+select t1.*,
+       rank() over(order by salary desc) as "순위" 
+  from employee t1
+fetch first 3 rows only;
+--case2)  
+select t1.* ,rownum 
+  from (select *
+          from employee
+        order by salary desc ) t1
+fetch first 3 rows only;    
+--12. 사원들이 일한 시간 수를 부서별, 사원 이름별 오름차순으로 보이시오. 
+    select t3.deptname "부서명", t2.name "사워명", sum(t1.hoursworked) "일한시간"
+      from works t1 join employee t2 on t1.empno = t2.empno
+                    join department t3 on t2.deptno = t3.deptno
+  group by t3.deptname, t2.name
+  order by t3.deptname, t2.name;
+--13. 부서별로 급여가 부서평균 급여 보다 높은 사원의 이름과 월급을 보이시오.
+select t3.name, t3.salary
+  from employee t3
+ where t3.salary > (    select avg(t1.salary)
+                          from employee t1 join department t2 on t1.deptno = t2.deptno
+                      group by t2.deptno
+                        having t2.deptno = t3.deptno );
+
+--14. 2명 이상의 사원이 참여한 프로젝트의 번호, 프로젝트명, 사원의 수를 보이시오. 
+    select t1.projno "프로젝트 번호",t2.projname "프로젝트명", count(*) "사원수"
+      from works t1 join project t2 on t1.projno = t2.projno
+  group by t1.projno, t2.projname
+  having count(*) >= 2;     
+  
+  select t3.projno "프로젝트 번호", t3.projname "프로젝트명", count(*) "사원수"
+    from employee t1 join works t2 on t1.empno = t2.empno
+                     join project t3 on t2.projno = t3.projno   
+   where t3.projno in ( select projno
+                          from works 
+                      group by projno
+                      having count(*) >= 2 )     
+group by  t3.projno, t3.projname;
+  
+--15. 프로젝트에 참여시간이 가장 많은 사원과 적은 사원의 이름을 보이시오.
+--16. 팀장의 급여를 10%인상하고 인상된 결과를 보이시오. (단, department테이블을 활용할 것)
+--17. 사원이 참여한 프로젝트에 대해 사원명, 프로젝트명, 참여시간을 보이는 뷰를 작성하시오.
+--18. employee 테이블의 name 열을 대상으로 인덱스를 생성하시오. 
